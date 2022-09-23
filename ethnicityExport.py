@@ -31,7 +31,7 @@ with oracledb.connect(user=un, password=pw, dsn=cs) as con: # create the connect
 			# print('ID,Ethnicity,Race,LEP', file=outputfile) #print header row to output file
             try:
                 cur = con.cursor()
-                cur.execute('SELECT students.student_number, students.FedEthnicity, s_il_stu_demographics_x.fer, students.dcid FROM students LEFT JOIN s_il_stu_demographics_x ON students.dcid = s_il_stu_demographics_x.studentsdcid ORDER BY student_number DESC')
+                cur.execute('SELECT students.student_number, students.FedEthnicity, s_il_stu_demographics_x.fer, students.dcid FROM students LEFT JOIN s_il_stu_demographics_x ON students.dcid = s_il_stu_demographics_x.studentsdcid WHERE students.enroll_status = 0 ORDER BY student_number DESC')
                 rows = cur.fetchall() #fetchall() is used to fetch all records from result set and store the data from the query into the rows variable
 				# go through each entry (which is a tuple) in rows. Each entrytuple is a single student's data
                 for count, entrytuple in enumerate(rows):
