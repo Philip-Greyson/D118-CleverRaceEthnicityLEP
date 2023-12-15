@@ -28,6 +28,8 @@ print(f"Username: {un} |Password: {pw} |Server: {cs}")  # debug so we can see wh
 print(f"SFTP Username: {sftpUN} |SFTP Password: {sftpPW} |SFTP Server: {sftpHOST}")  # debug so we can see what sftp info is being used for connection
 badnames = ['use', 'user', 'teststudent', 'test student', 'testtt', 'testtest', 'karentest', 'tester']
 
+OUTPUT_FILE_NAME = 'raceethnicity.txt'
+OUTPUT_FILE_DIRECTORY = './sftp/clever'
 # Dicitonary to match the numeric race codes from PowerSchool to letter race abbreviations of Clever
 races = {12:'I', 13:'A', 14:'B', 15:'I', 16:'W', 17:'M'}
 
@@ -39,9 +41,9 @@ if __name__ == '__main__':  # main file execution
         print(f'INFO: Execution started at {startTime}', file=log)
         with oracledb.connect(user=un, password=pw, dsn=cs) as con:  # create the connecton to the database
             with con.cursor() as cur:  # start an entry cursor
-                print(f'Connection established to PS database on version: {con.version}')
-                print(f'Connection established to PS database on version: {con.version}', file=log)
-                with open('raceethnicity.txt', 'w') as outputfile:
+                print(f'INFO: Connection established to PS database on version: {con.version}')
+                print(f'INFO: Connection established to PS database on version: {con.version}', file=log)
+                with open(OUTPUT_FILE_NAME, 'w') as outputfile:
                     try:
                         cur = con.cursor()
                         cur.execute('SELECT students.student_number, students.FedEthnicity, s_il_stu_demographics_x.fer, students.dcid, students.first_name, students.last_name FROM students LEFT JOIN s_il_stu_demographics_x ON students.dcid = s_il_stu_demographics_x.studentsdcid WHERE students.enroll_status = 0 ORDER BY student_number DESC')
@@ -59,7 +61,7 @@ if __name__ == '__main__':  # main file execution
                                     # print(raceChar)
                                     ethnicity = "Y" if (ethnicity_flag == 1) else "N"  # set the ethnicty y/n based on if the flag was 1/0
                                     #print(str(idNum) + "," + ethnicity + "," + race) # debug
-                                    cur.execute('SELECT lep FROM S_IL_STU_X WHERE studentsdcid = ' + stuDCID)  # get the limited english proficient flag from powerschool
+                                    cur.execute('SELECT lep FROM S_IL_STU_X WHERE studentsdcid = :dcid', dcid=stuDCID)  # get the limited english proficient flag from powerschool
                                     lepResults = cur.fetchall()
                                     if lepResults:
                                         rawLep = str(lepResults[0][0])  # used for debugging output, not strictly neccessary
@@ -70,7 +72,7 @@ if __name__ == '__main__':  # main file execution
 
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}')  # print out raw race num, ethnicity and lep flag values for debug
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}', file=log)
-                                    print(f'{idNum},{ethnicity},{raceChar},{lep}', file=outputfile)  # do our output to the file for each student
+                                    print(f'{idNum}/t{ethnicity}/t{raceChar}/t{lep}', file=outputfile)  # do our output to the file for each student
 
                             except Exception as er:
                                 print(f'ERROR while processing student {student[0]} : {er}')
@@ -83,13 +85,14 @@ if __name__ == '__main__':  # main file execution
         # after all the files are done writing and now closed, open an sftp connection to the server and place the file on there
         try:
             with pysftp.Connection(sftpHOST, username=sftpUN, password=sftpPW, cnopts=cnopts) as sftp:
-                print('SFTP connection established')
+                print(f'INFO" SFTP connection established to {sftpHOST}')
+                print(f'INFO" SFTP connection established to {sftpHOST}', file=log)
                 # print(sftp.pwd)  # debug, show what folder we connected to
                 # print(sftp.listdir())  # debug, show what other files/folders are in the current directory
-                sftp.chdir('./sftp/clever')
+                sftp.chdir(OUTPUT_FILE_DIRECTORY)
                 # print(sftp.pwd)  # debug, make sure out changedir worked
                 # print(sftp.listdir())
-                sftp.put('raceethnicity.txt')  # upload the file onto the sftp server
+                sftp.put(OUTPUT_FILE_NAME)  # upload the file onto the sftp server
                 print("INFO: Race & ethnicity file placed on remote server")
                 print("INFO: Race & ethnicity file placed on remote server", file=log)
         except Exception as er:
