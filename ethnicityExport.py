@@ -72,7 +72,7 @@ if __name__ == '__main__':  # main file execution
 
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}')  # print out raw race num, ethnicity and lep flag values for debug
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}', file=log)
-                                    print(f'{idNum}/t{ethnicity}/t{raceChar}/t{lep}', file=outputfile)  # do our output to the file for each student
+                                    print(f'{idNum}\t{ethnicity}\t{raceChar}\t{lep}', file=outputfile)  # do our output to the file for each student
 
                             except Exception as er:
                                 print(f'ERROR while processing student {student[0]} : {er}')
