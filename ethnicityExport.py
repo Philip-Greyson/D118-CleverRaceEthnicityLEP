@@ -57,7 +57,7 @@ if __name__ == '__main__':  # main file execution
                                     stuDCID = str(student[3])
                                     ethnicity_flag = int(student[1]) if student[1] else None  # get their ethnicity flag as 1 or 0
                                     raceNum = int(student[2]) if student[2] else None  # get the race code (12-17)
-                                    raceChar = races.get(raceNum, 'unknown') if raceNum else 'unknown'  # get the matching character for the code, return "unknown" if code does not exist or they have no race code
+                                    raceChar = races.get(raceNum, '') if raceNum else ''  # get the matching character for the code, return empty string if code does not exist or they have no race code
                                     # print(raceChar)
                                     ethnicity = "Y" if (ethnicity_flag == 1) else "N"  # set the ethnicty y/n based on if the flag was 1/0
                                     #print(str(idNum) + "," + ethnicity + "," + race) # debug
