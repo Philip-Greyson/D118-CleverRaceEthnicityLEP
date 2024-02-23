@@ -46,17 +46,21 @@ if __name__ == '__main__':  # main file execution
                 with open(OUTPUT_FILE_NAME, 'w') as outputfile:
                     try:
                         cur = con.cursor()
-                        cur.execute('SELECT students.student_number, students.FedEthnicity, s_il_stu_demographics_x.fer, students.dcid, students.first_name, students.last_name FROM students LEFT JOIN s_il_stu_demographics_x ON students.dcid = s_il_stu_demographics_x.studentsdcid WHERE students.enroll_status = 0 ORDER BY student_number DESC')
+                        cur.execute('SELECT students.student_number, students.FedEthnicity, s_il_stu_demographics_x.fer, students.dcid, students.first_name, students.last_name, u_def_ext_students0.custom_ethnicity, u_def_ext_students0.custom_race, u_def_ext_students0.custom_lep FROM students LEFT JOIN s_il_stu_demographics_x ON students.dcid = s_il_stu_demographics_x.studentsdcid LEFT JOIN u_def_ext_students0 ON students.dcid = u_def_ext_students0.studentsdcid WHERE students.enroll_status = 0 ORDER BY student_number DESC')
                         students = cur.fetchall()  # fetchall() is used to fetch all records from result set and store the data from the query into the rows variable
                         for student in students:  # go through each student's data one at a time
                             try:  # do each student in a try/except block so if one throws an error we can skip to the next
                                 # print(student)  # debug
                                 if not str(student[4]).lower() in badnames and not str(student[5]).lower() in badnames:  # check first and last name against array of bad names, only print if both come back not in it
+                                    changed = False
                                     # what we would refer to as their "ID Number" aka 6 digit number starting with 22xxxx or 21xxxx
                                     idNum = int(student[0])
                                     stuDCID = str(student[3])
                                     ethnicity_flag = int(student[1]) if student[1] else None  # get their ethnicity flag as 1 or 0
                                     raceNum = int(student[2]) if student[2] else None  # get the race code (12-17)
+                                    currentEthnicity = str(student[6]) if student[6] else ''
+                                    currentRace = str(student[7]) if student[7] else ''
+                                    currentLep = str(student[8]) if student[8] else ''
                                     raceChar = races.get(raceNum, '') if raceNum else ''  # get the matching character for the code, return empty string if code does not exist or they have no race code
                                     # print(raceChar)
                                     ethnicity = "Y" if (ethnicity_flag == 1) else "N"  # set the ethnicty y/n based on if the flag was 1/0
@@ -72,7 +76,17 @@ if __name__ == '__main__':  # main file execution
 
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}')  # print out raw race num, ethnicity and lep flag values for debug
                                     print(f'DBUG: Found student {idNum} with race {raceNum} - {raceChar}, ethnicity: {ethnicity_flag}, LEP: {rawLep}', file=log)
-                                    print(f'{idNum}\t{ethnicity}\t{raceChar}\t{lep}', file=outputfile)  # do our output to the file for each student
+                                    if (currentEthnicity != ethnicity):
+                                        print(f'ACTION: Ethnicity flag for {idNum} is changing from {currentEthnicity} to {ethnicity}', file=log)
+                                        changed = True
+                                    if (currentRace != raceChar):
+                                        print(f'ACTION: Race character for {idNum} is changing from {currentRace} to {raceChar}', file=log)
+                                        changed = True
+                                    if (currentLep != lep):  # only print out the student to the file if they have a different value than whats currently in PS
+                                        print(f'ACTION: LEP indicator for {idNum} is changing from {currentLep} to {lep}', file=log)
+                                        changed = True
+                                    if changed:
+                                        print(f'{idNum}\t{ethnicity}\t{raceChar}\t{lep}', file=outputfile)  # do our output to the file for each student
 
                             except Exception as er:
                                 print(f'ERROR while processing student {student[0]} : {er}')
